@@ -1,0 +1,10 @@
+{
+    "subject": {
+        "clearance_level": 3,
+        "department": "legal"
+    },
+    "path": [
+        "posts"
+    ],
+    "method": "GET"
+}
