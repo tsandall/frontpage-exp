@@ -1,14 +1,15 @@
-# Example:
-#
-# "Ensure that ingress hostnames are whitelisted."
-#
-# Or more specifically, "Ensure that ingress hostnames match a whitelist entry on the containing namespace."
+# Kubernetes Admission Control Invariants
 
 package kubernetes.invariants
 
 import data.kubernetes.ingresses
 import data.kubernetes.namespaces
 
+#----------------------------------------------------------------------
+# Ingress Invariants
+
+# Generates a list of ingresses (identified by `namespace` and `name`)
+# that contain invalid hosts.
 violations[{
     "namespace": namespace,
     "name": name,
@@ -19,13 +20,20 @@ violations[{
     not contains(whitelist[namespace], host)
 }
 
+# Generates a list of allowed hostnames per namespace.
 whitelist[namespace] = hosts {
     obj := namespaces[namespace]
-    hosts := json.unmarshal(obj.metadata.annotations["acmecorp.com/hostname-whitelist"])
+    annotations := obj.metadata.annotations
+    annotation := annotations["acmecorp.com/hostname-whitelist"]
+    hosts := json.unmarshal(annotation)
 }
 
-contains(xs, x) {
-    xs[_] = x
+#----------------------------------------------------------------------
+# Helpers
+
+# Checks if `list` includes an element matching `item`.
+contains(list, item) {
+    list[_] = item
 }
 
 
@@ -70,10 +78,10 @@ test_violations {
             }
         }
     }
-    
+
     violations[x] with data.kubernetes.ingresses as bad_ingress with data.kubernetes.namespaces as namespaces
     x.namespace = "default"
     x.name = "bad_ingress"
-    
+
     violations == set() with data.kubernetes.ingresses as good_ingress with data.kubernetes.namespaces as namespaces
 }
