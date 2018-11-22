@@ -1,38 +1,31 @@
+# Partial Evaluation
+
 package app.filtering
 
 #----------------------------------------------------------------------
 # Data Filtering Policy
 
-# Enumerate the set of posts the user is allowed to see.
+# Allow users to see posts their own posts.
 posts[post] {
     post := data.posts[_]
+    post.owner = input.subject.name
+}
 
-    # Users are allowed to see posts at (or below) their
-    # clearance level in their own department.
+# Allow users to see posts in their department that they have sufficient
+# clearance level for.
+posts[post] {
+    post := data.posts[_]
     post.department = input.subject.department
     post.security_level <= input.subject.clearance_level
 }
 
-#----------------------------------------------------------------------
-# API Authorization Policy
-
-# Allow users to get specific posts.
-allow {
-    input.method = "GET"
-    input.path = ["posts", post_id]
-    posts[post]
-    post.id = post_id
-}
-
-# Allow users to list posts.
-allow {
-    input.method = "GET"
-    input.path = ["posts"]
-    posts[post]
-}
-
-
 # Example output:
 #
-# data.posts[x].department = "legal"
-# data.posts[x].security_level <= 3
+#  Conditions (1)
+#  --------------
+#  data.posts[x].owner = "bob"
+#
+#  Conditions (2)
+#  --------------
+#  data.posts[x].department = "ops"
+#  data.posts[x].security_level <= 3
